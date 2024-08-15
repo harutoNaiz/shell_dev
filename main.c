@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<limits.h>
+#include <sys/types.h>
 
 #define BUFF_TOKEN_LEN 64
 #define BUFFER_SIZE 1024
@@ -18,8 +19,8 @@ void main_loop(void){
         line = read_line(); //the input to the shell
         args = split_line(line); //gets all the attributes by splittinf the input to the command line
         //the following line updates the status of the shell until exit called  
-        binary_result= 1; //testing the loop
-        // binary_result =  runner(args);
+        // binary_result= 1; //testing the loop
+        binary_result =  runner(args);
         free(line);
         free (args);
 
@@ -101,11 +102,46 @@ char **split_line(char *line){
     return tokens; //return the tokens array
 }
 
+//the code tokenised is passed into the runner which invokes the call
+int runner(char** args){
+
+    pid_t child;
+    int flag;
+
+    if(strcmp(args[0], "exit")==0){
+        return exit_shell(args);
+    }
+    // creates the child process
+    child = fork();
+    
+    if(child == 0){
+        if(execvp(args[0], args) <0){
+            printf("command not found :(\n");
+        }
+        exit(EXIT_FAILURE);
+
+    } else if(child <0){
+        
+        printf("fork failed :(");
+        exit(EXIT_FAILURE);
+    
+    } else{
+        // waity for the child to complete exec
+        waitpid(child, &flag, WUNTRACED);
+    }
+    return 1;
+
+}
+
+//the code to exit the shell
+char** exit_shell(char **args){
+
+    return 0;
+}
+
 int main(int argc, char **argv){
 
     main_loop();
-
     return EXIT_SUCCESS;
-
 }
 
